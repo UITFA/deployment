@@ -1,0 +1,59 @@
+auth_enabled: false
+
+server:
+  http_listen_port: 3100
+
+ingester:
+  chunk_idle_period: 3m
+  chunk_block_size: 262144
+  chunk_retain_period: 1m
+  max_transfer_retries: 0
+  wal:
+    dir: /loki/wal
+  lifecycler:
+    ring:
+      kvstore:
+        store: inmemory
+      replication_factor: 1
+
+limits_config:
+  enforce_metric_name: false
+  reject_old_samples: true
+  reject_old_samples_max_age: 1m
+
+compactor:
+  working_directory: /loki/boltdb-shipper-compactor
+  shared_store: aws
+
+schema_config:
+  configs:
+    - from: 2024-06-03
+      store: boltdb-shipper
+      object_store: aws
+      schema: v11
+      index:
+        prefix: loki_index_
+        period: 24h
+
+storage_config:
+  aws:
+    endpoint: s3.ap-southeast-1.amazonaws.com
+    bucketnames: alia-pro-staging
+    access_key_id: ${AWS_S3_ACCESS_KEY_ID}
+    secret_access_key: ${AWS_S3_SECRET_ACCESS_KEY}
+    region: ${AWS_S3_BUCKET_REGION}
+    s3forcepathstyle: true
+  boltdb_shipper:
+    active_index_directory: /loki/index
+    cache_location: /loki/boltdb-shipper-cache
+    shared_store: aws
+
+chunk_store_config:
+  max_look_back_period: 0s
+
+table_manager:
+  retention_deletes_enabled: true
+  retention_period: 168h
+
+ruler:
+  alertmanager_url: http://alertmanager:9093

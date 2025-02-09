@@ -1,0 +1,104 @@
+version: "3"
+services:
+  grafana:
+    image: grafana/grafana-oss:11.1.0
+    env_file:
+      - .env
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./config/grafana:/etc/grafana/provisioning
+    restart: unless-stopped
+    networks:
+      - uitfa
+    depends_on:
+      - prometheus
+
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yaml"
+      - "--storage.tsdb.path=/prometheus"
+    volumes:
+      - ./config/prometheus/prometheus.yaml:/etc/prometheus/prometheus.yaml:ro
+    restart: unless-stopped
+    networks:
+      - uitfa
+
+  loki:
+    image: grafana/loki:2.9.2
+    volumes:
+      - type: volume
+        source: loki_data
+        target: /data
+      - type: bind
+        source: ./config/loki/loki-config.yaml
+        target: /etc/loki/local-config.yaml
+    command:
+      - -config.file=/etc/loki/local-config.yaml
+      - -config.expand-env=true
+    env_file:
+      - .env
+    depends_on:
+      - grafana
+    networks:
+      - uitfa
+
+  promtail:
+    image: grafana/promtail:2.9.2
+    volumes:
+      - ./config/promtail/promtail.yaml:/etc/promtail/docker-config.yaml
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: -config.file=/etc/promtail/docker-config.yaml
+    depends_on:
+      - loki
+    networks:
+      - uitfa
+
+  node_exporter:
+    image: quay.io/prometheus/node-exporter:v1.8.1
+    command: "--path.rootfs=/host"
+    pid: host
+    restart: unless-stopped
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/host/root:ro
+    networks:
+      - uitfa
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    command:
+      - "-port=8098"
+      - "--v=2"
+      - "--housekeeping_interval=10s"
+      - "--docker_only=true"
+      - "-store_container_labels=false"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /etc/machine-id:/etc/machine-id:ro
+      - /var/lib/dbus/machine-id:/var/lib/dbus/machine-id:ro
+      - /proc:/host/proc:ro
+      - /etc:/host/etc:ro
+    devices:
+      - /dev/kmsg
+    privileged: true
+    restart: unless-stopped
+    networks:
+      - uitfa
+
+volumes:
+  grafana-data:
+    driver: local
+  loki_data:
+    driver: local
+
+networks:
+  uitfa:
+    driver: bridge

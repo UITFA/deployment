@@ -1,7 +1,7 @@
 version: "3"
 services:
   backend:
-    image: registry-gitlab.geekup.io/gu_alia/alia-professional/alia-professional-be/alia-pro-be:${VERSION}
+    image: ghcr.io/bthzang/aqa-backend-nestjs/aqa-be:lastest
     restart: always
     labels:
       logging: "promtail"
