@@ -1,36 +1,36 @@
 services:
-  # backend:
-  #   image: ghcr.io/bthzang/aqa-backend-nestjs/aqa-be:latest
-  #   restart: always
-  #   labels:
-  #     logging: "promtail"
-  #     logging_jobname: "containerlogs"
-  #   env_file:
-  #     - .env
-  #   links:
-  #     - db
-  #   networks:
-  #     - uitfa
+  backend:
+    image: ghcr.io/bthzang/backend-server/uitfa-be:${VERSION}
+    restart: always
+    labels:
+      logging: "promtail"
+      logging_jobname: "containerlogs"
+    env_file:
+      - .env
+    links:
+      - db
+    networks:
+      - uitfa
 
-  # redis:
-  #   image: redis:7.2.5
-  #   restart: always
-  #   volumes:
-  #     - redis:/var/lib/redis/data
-  #   depends_on:
-  #     - backend
-  #   env_file:
-  #     - .env
-  #   networks:
-  #     - uitfa
+  redis:
+    image: redis:7.2.5
+    restart: always
+    volumes:
+      - redis:/var/lib/redis/data
+    depends_on:
+      - backend
+    env_file:
+      - .env
+    networks:
+      - uitfa
 
-  # redis-insight:
-  #   image: redislabs/redisinsight:2.50.0
-  #   restart: always
-  #   depends_on:
-  #     - redis
-  #   networks:
-  #     - uitfa
+  redis-insight:
+    image: redislabs/redisinsight:2.50.0
+    restart: always
+    depends_on:
+      - redis
+    networks:
+      - uitfa
 
   db:
     image: postgres:latest
