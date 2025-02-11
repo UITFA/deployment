@@ -17,9 +17,6 @@ deploy() {
 
   export VERSION=$version
 
-  echo "Login to Github registry...."]
-  echo "$github_token" | docker login ghcr.io -u bthzang --password-stdin
-
   echo "Start deploying backend...."
   old_container_id=$(docker ps -f name=$service_name -q | tail -n1)
 
